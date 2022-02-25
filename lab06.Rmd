@@ -8,10 +8,60 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(broom)
-library(pROC)
-library(plotROC) 
 library(knitr)
+library(broom)
+library(leaps)
+library(rms)
+library(Sleuth3)
 ```
+
+
+# Part 1, Model Selection
+
+```{r}
+sat_scores <- Sleuth3::case1201 
+full_model <- lm(SAT ~ Takers + Income + Years + Public + Expend + Rank , data = sat_scores)
+tidy(full_model)
+```
+
+### Exercise 1
+
+```{r}
+model_select <- regsubsets(SAT ~ Takers + Income + Years + Public + Expend + 
+                             Rank , data = sat_scores, method = "backward")
+select_summary <- summary(model_select)
+select_summary$adjr2
+coef(model_select, 4)
+```
+
+
+### Exercise 2
+```{r}
+select_summary$bic
+coef(model_select, 3)
+```
+
+### Exercise 3
+
+```{r}
+model_select_aic <- step(full_model, direction = "backward")
+tidy(model_select_aic) %>% 
+  kable(format="markdown", digits=3)
+```
+
+### Exercise 4
+
+These models do not have the same number of predictors. The Adjusted $R^2$ model has four predictors, the BIC model has three predictors, and the AIC model has four predictors. This is in line with my prediction because BIC is dependent on sample size, and the size of this dataset is very large.
+
+# Part 2: Model Diagnostics
+
+### Exercise 5
+
+```{r}
+df <- augment(model_select_aic, type.predict = "response",type.residuals = "deviance") %>% 
+  mutate(obs_num = row_number())
+head(df, 5)
+```
+
 
 

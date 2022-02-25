@@ -171,7 +171,149 @@ pre code {
 </div>
 
 
-
+<div id="part-1-model-selection" class="section level1">
+<h1>Part 1, Model Selection</h1>
+<pre class="r"><code>sat_scores &lt;- Sleuth3::case1201 
+full_model &lt;- lm(SAT ~ Takers + Income + Years + Public + Expend + Rank , data = sat_scores)
+tidy(full_model)</code></pre>
+<pre><code>## # A tibble: 7 × 5
+##   term         estimate std.error statistic  p.value
+##   &lt;chr&gt;           &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+## 1 (Intercept) -94.7       212.      -0.448  0.657   
+## 2 Takers       -0.480       0.694   -0.692  0.493   
+## 3 Income       -0.00820     0.152   -0.0538 0.957   
+## 4 Years        22.6         6.31     3.58   0.000866
+## 5 Public       -0.464       0.579   -0.802  0.427   
+## 6 Expend        2.21        0.846    2.61   0.0123  
+## 7 Rank          8.48        2.11     4.02   0.000230</code></pre>
+<div id="exercise-1" class="section level3">
+<h3>Exercise 1</h3>
+<pre class="r"><code>model_select &lt;- regsubsets(SAT ~ Takers + Income + Years + Public + Expend + 
+                             Rank , data = sat_scores, method = &quot;backward&quot;)
+select_summary &lt;- summary(model_select)
+select_summary$adjr2</code></pre>
+<pre><code>## [1] 0.7695367 0.8405479 0.8627047 0.8661268 0.8649009 0.8617684</code></pre>
+<pre class="r"><code>coef(model_select, 4)</code></pre>
+<pre><code>## (Intercept)       Years      Public      Expend        Rank 
+## -204.598232   21.890482   -0.663798    2.241640   10.003169</code></pre>
+</div>
+<div id="exercise-2" class="section level3">
+<h3>Exercise 2</h3>
+<pre class="r"><code>select_summary$bic</code></pre>
+<pre><code>## [1] -66.59010 -82.14815 -86.79191 -85.24089 -81.99674 -78.08808</code></pre>
+<pre class="r"><code>coef(model_select, 3)</code></pre>
+<pre><code>## (Intercept)       Years      Expend        Rank 
+## -303.724295   26.095227    1.860866    9.825794</code></pre>
+</div>
+<div id="exercise-3" class="section level3">
+<h3>Exercise 3</h3>
+<pre class="r"><code>model_select_aic &lt;- step(full_model, direction = &quot;backward&quot;)</code></pre>
+<pre><code>## Start:  AIC=333.58
+## SAT ~ Takers + Income + Years + Public + Expend + Rank
+## 
+##          Df Sum of Sq   RSS    AIC
+## - Income  1       2.0 29844 331.59
+## - Takers  1     332.4 30175 332.14
+## - Public  1     445.8 30288 332.32
+## &lt;none&gt;                29842 333.58
+## - Expend  1    4744.9 34587 338.96
+## - Years   1    8897.8 38740 344.63
+## - Rank    1   11223.0 41065 347.54
+## 
+## Step:  AIC=331.59
+## SAT ~ Takers + Years + Public + Expend + Rank
+## 
+##          Df Sum of Sq   RSS    AIC
+## - Takers  1     401.3 30246 330.25
+## - Public  1     495.5 30340 330.41
+## &lt;none&gt;                29844 331.59
+## - Expend  1    6904.4 36749 339.99
+## - Years   1    9219.7 39064 343.05
+## - Rank    1   11645.9 41490 346.06
+## 
+## Step:  AIC=330.25
+## SAT ~ Years + Public + Expend + Rank
+## 
+##          Df Sum of Sq    RSS    AIC
+## &lt;none&gt;                 30246 330.25
+## - Public  1      1462  31708 330.62
+## - Expend  1      7343  37589 339.12
+## - Years   1      8837  39083 341.07
+## - Rank    1    184786 215032 426.33</code></pre>
+<pre class="r"><code>tidy(model_select_aic) %&gt;% 
+  kable(format=&quot;markdown&quot;, digits=3)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">-204.598</td>
+<td align="right">117.687</td>
+<td align="right">-1.738</td>
+<td align="right">0.089</td>
+</tr>
+<tr class="even">
+<td align="left">Years</td>
+<td align="right">21.890</td>
+<td align="right">6.037</td>
+<td align="right">3.626</td>
+<td align="right">0.001</td>
+</tr>
+<tr class="odd">
+<td align="left">Public</td>
+<td align="right">-0.664</td>
+<td align="right">0.450</td>
+<td align="right">-1.475</td>
+<td align="right">0.147</td>
+</tr>
+<tr class="even">
+<td align="left">Expend</td>
+<td align="right">2.242</td>
+<td align="right">0.678</td>
+<td align="right">3.305</td>
+<td align="right">0.002</td>
+</tr>
+<tr class="odd">
+<td align="left">Rank</td>
+<td align="right">10.003</td>
+<td align="right">0.603</td>
+<td align="right">16.581</td>
+<td align="right">0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="exercise-4" class="section level3">
+<h3>Exercise 4</h3>
+<p>These models do not have the same number of predictors. The Adjusted <span class="math inline">\(R^2\)</span> model has four predictors, the BIC model has three predictors, and the AIC model has four predictors. This is in line with my prediction because BIC is dependent on sample size, and the size of this dataset is very large.</p>
+</div>
+</div>
+<div id="part-2-model-diagnostics" class="section level1">
+<h1>Part 2: Model Diagnostics</h1>
+<div id="exercise-5" class="section level3">
+<h3>Exercise 5</h3>
+<pre class="r"><code>df &lt;- augment(model_select_aic, type.predict = &quot;response&quot;,type.residuals = &quot;deviance&quot;) %&gt;% 
+  mutate(obs_num = row_number())
+head(df, 5)</code></pre>
+<pre><code>## # A tibble: 5 × 12
+##     SAT Years Public Expend  Rank .fitted .resid   .hat .sigma .cooksd
+##   &lt;int&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;
+## 1  1088  16.8   87.8   25.6  89.7   1059.  28.7  0.100    25.8 0.0304 
+## 2  1075  16.1   86.2   20.0  90.6   1041.  34.0  0.0788   25.7 0.0320 
+## 3  1068  16.6   88.3   20.6  89.8   1044.  24.0  0.0894   25.9 0.0185 
+## 4  1045  16.3   83.9   27.1  86.3   1021.  24.4  0.0585   25.9 0.0117 
+## 5  1045  17.2   83.6   21.0  88.5   1050.  -4.99 0.113    26.2 0.00106
+## # … with 2 more variables: .std.resid &lt;dbl&gt;, obs_num &lt;int&gt;</code></pre>
+</div>
+</div>
 
 
 
