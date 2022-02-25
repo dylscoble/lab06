@@ -1,0 +1,17 @@
+---
+title: "lab06"
+author: "Dylan Scoble"
+date: "2/24/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(broom)
+library(pROC)
+library(plotROC) 
+library(knitr)
+```
+
+
