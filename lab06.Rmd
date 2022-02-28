@@ -2,8 +2,11 @@
 title: "lab06"
 author: "Dylan Scoble"
 date: "2/24/2022"
-output: html_document
+output: pdf_document
 ---
+
+GitHub Repository for this Assignment: https://github.com/dylscoble/lab06
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -51,17 +54,109 @@ tidy(model_select_aic) %>%
 
 ### Exercise 4
 
-These models do not have the same number of predictors. The Adjusted $R^2$ model has four predictors, the BIC model has three predictors, and the AIC model has four predictors. This is in line with my prediction because BIC is dependent on sample size, and the size of this dataset is very large.
+These models do not have the same number of predictors. The Adjusted $R^2$ model has four predictors, the BIC model has three predictors, and the AIC model has four predictors. This is in line with my prediction because BIC is dependent on sample size, and the size of this dataset is large.
 
 # Part 2: Model Diagnostics
 
 ### Exercise 5
 
 ```{r}
+threshold = 1100
+
 df <- augment(model_select_aic, type.predict = "response",type.residuals = "deviance") %>% 
-  mutate(obs_num = row_number())
+  mutate(obs_num = row_number()) %>%
+  mutate(risk_predict = if_else(.fitted > threshold, TRUE, FALSE))
+
 head(df, 5)
 ```
 
+### Exercise 6
 
+
+The best equation to determine the threshold which would help us determine if observations in this dataset have high leverage $2 * (numpredictors + 1 / n)$. In this situation, the best threshold is 0.2
+```{r}
+threshold <- 10/nrow(df)
+threshold
+```
+
+### Exercise 7
+
+```{r}
+ggplot(data = df, aes(x = obs_num, y=.hat)) +
+  geom_point() +
+  geom_hline(yintercept=threshold)+
+  labs(x="Observation Number",
+       y="Leverage",
+       title="Leverage for each State")
+```
+
+### Exercise 8
+
+The  two states with the highest leverage are ID numbers 22 and 29. To find out which states these are, we must search back through the original dataset.
+```{r}
+state1 = sat_scores[22,"State"]
+state2 = sat_scores[29,"State"]
+
+state1
+state2
+```
+
+
+###  Exercise 9
+
+```{r}
+ggplot(data = df, aes(y=.std.resid, x=.fitted)) +
+  geom_point() +
+  geom_hline(yintercept=-2) +
+  geom_hline(yintercept=2)  +
+  labs(x="Standardized Residuals",
+       y="Fitted Values",
+       title="Standardized Residuals vs Predictions")
+```
+
+### Exercise 10
+In order to  find the states with extreme residual values, we must get their observation numbers, then use this to get the state name. The plot above tells us that there are three such states.
+
+```{r}
+which(df$.std.resid < -2)
+state1 = sat_scores[16,"State"]
+state2 = sat_scores[29,"State"]
+state3 = sat_scores[50,"State"]
+
+state1
+state2
+state3
+```
+
+### Exercise 11
+
+Based on the following plot, the only influential point in this dataset is observation number 29, which was determined to be Alaska. It may be forthcoming to remove Alaska from the dataset in order to generate stronger predictions, but that depends on the purpose of the study.
+```{r}
+ggplot(data = df, aes(x = obs_num, y=.cooksd)) +
+  geom_point() +
+  geom_hline(yintercept=1) +
+  labs(x="Observation Number",
+       y="Cook's Distance",
+       title="Cook's Distance for each State")
+```
+
+
+### Exercise 12
+
+```{r}
+model2 <- lm(Expend ~ Years + Public + Rank , data = sat_scores)
+tidy(model2) %>% 
+  kable(format="markdown",digits=3)
+model2sum <- summary(model2)
+```
+
+It appears that the Expend variable has a moderate correlation with the other predictor variables, but no severe correlations that are statistically significant.
+```{r}
+vif_expend = 1/(1-model2sum$r.squared)
+vif_expend
+
+vif_all <- vif(model_select_aic)
+tidy(vif_all) %>% 
+  kable(format="markdown",digits=3)
+```
 
